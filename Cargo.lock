@@ -241,6 +241,7 @@ dependencies = [
  "indexmap",
  "miette",
  "serde",
+ "thiserror",
  "tinytemplate",
  "toml",
 ]

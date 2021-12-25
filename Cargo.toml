@@ -14,6 +14,7 @@ globwalk = "0.8.1"
 indexmap = { version = "1.7.0", features = ["serde"] }
 miette = { version = "3.2.0", features = ["fancy"] }
 serde = { version = "1.0.132", features = ["derive"] }
+thiserror = "1.0.30"
 tinytemplate = "1.2.1"
 toml = { version = "0.5.8", features = ["indexmap"] }
 
