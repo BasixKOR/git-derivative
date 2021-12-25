@@ -16,13 +16,13 @@ pub fn get_git_repository_path(path: &Path) -> Option<PathBuf> {
 
 /// Finds a .gitderivative file in the given Git repository and returns its path.
 pub fn find_file(path: &Path) -> IoResult<PathBuf> {
-    let folder = get_git_repository_path(path).ok_or(IoError::new(
+    let folder = get_git_repository_path(path).ok_or_else(|| IoError::new(
         IoErrorKind::NotFound,
         "No Git repository found",
     ))?;
     let file = folder.join(".gitderivative");
     if file.exists() {
-        return Ok(file.to_owned());
+        return Ok(file);
     }
     Err(IoError::new(
         IoErrorKind::NotFound,
