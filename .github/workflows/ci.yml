@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: build
+    runs-on: ${{ matrix.config.os }} # we run many different builds
+    strategy:
+      matrix:
+        config:
+          - os: ubuntu-latest
+          - os: macos-latest
+          - os: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+      - name: Stable with rustfmt and clippy
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          components: rustfmt, clippy
+      - name: Test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+      - name: Annotate commit with clippy warnings
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Security audit
+        uses: actions-rs/audit-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release

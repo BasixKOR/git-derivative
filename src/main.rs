@@ -36,7 +36,7 @@ fn main() -> Result<()> {
             let files = get_changed_files(&prev, &current)?;
             let file_paths = files
                 .iter()
-                .map(|file| RelativePath::new(file))
+                .map(RelativePath::new)
                 .collect::<Vec<_>>();
             let config_file = find_file(Path::new("."))?;
             let config = parse_from_file(&config_file)?;

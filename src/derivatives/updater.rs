@@ -26,7 +26,7 @@ pub fn run_config(
             continue;
         };
 
-        template.add_template(path.as_str(), &generator)?;
+        template.add_template(path.as_str(), generator)?;
 
         let command = template.render(path.as_str(), &Context { path })?;
 
@@ -54,7 +54,7 @@ pub fn run_all_config(config: &DerivativeConfig, root: &Path) -> Result<bool> {
     let mut success = true;
     for (path, generator) in config.generators.iter() {
         let mut template = TinyTemplate::new();
-        template.add_template(path.as_str(), &generator)?;
+        template.add_template(path.as_str(), generator)?;
 
         let command = template.render(path.as_str(), &Context { path })?;
 
