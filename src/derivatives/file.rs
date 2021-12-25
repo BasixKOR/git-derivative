@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{Error as IoError, ErrorKind as IoErrorKind, Read, Result as IoResult};
+use std::io::{Error as IoError, Read, Result as IoResult};
 use std::path::{Path, PathBuf};
 
 use miette::{Diagnostic, NamedSource, SourceOffset, SourceSpan};
@@ -40,8 +40,7 @@ pub enum FindError {
 
 /// Finds a .gitderivative file in the given Git repository and returns its path.
 pub fn find_file(path: &Path) -> Result<PathBuf, FindError> {
-    let folder = get_git_repository_path(path)
-        .ok_or(FindError::NoGitRepository)?;
+    let folder = get_git_repository_path(path).ok_or(FindError::NoGitRepository)?;
     let file = folder.join(".gitderivative");
     if file.exists() {
         return Ok(file);
@@ -71,31 +70,29 @@ pub enum ParseError {
     Toml(#[from] toml::de::Error),
 }
 
-// https://github.com/zkat/miette/issues/98
-fn to_source_offset(num: usize) -> SourceOffset {
-    unsafe { std::mem::transmute(num) }
-}
-
-pub fn parse_from_file(path: &Path) -> Result<DerivativeConfig, ParseError> {
+pub fn parse_from_file(path: &Path) -> Result<(DerivativeConfig, String), ParseError> {
     let mut file = File::open(path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-    Ok(toml::from_str(&contents).or_else(|source| {
-        if let Some((line, col)) = source.line_col() {
-            let start = SourceOffset::from_location(&contents, line, col);
-            let len = to_source_offset(1);
-            Err(ParseError::TomlSyntax {
-                source,
-                source_code: NamedSource::new(
-                    path.file_name().unwrap().to_string_lossy(),
-                    contents,
-                ),
-                span: (start, len).into(),
-            })
-        } else {
-            Err(ParseError::Toml(source))
-        }
-    })?)
+    Ok((
+        toml::from_str(&contents).or_else(|source| {
+            if let Some((line, col)) = source.line_col() {
+                let start = SourceOffset::from_location(&contents, line, col);
+                let len = super::to_source_offset(1);
+                Err(ParseError::TomlSyntax {
+                    source,
+                    source_code: NamedSource::new(
+                        path.file_name().unwrap().to_string_lossy(),
+                        contents.clone(),
+                    ),
+                    span: (start, len).into(),
+                })
+            } else {
+                Err(ParseError::Toml(source))
+            }
+        })?,
+        contents,
+    ))
 }
 
 pub fn create_file(path: &Path) -> IoResult<File> {

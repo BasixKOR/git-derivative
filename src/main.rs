@@ -24,9 +24,9 @@ fn main() -> Result<()> {
         },
         Subcommands::Update => {
             let config_file = find_file(Path::new("."))?;
-            let config = parse_from_file(&config_file)?;
+            let (config, source) = parse_from_file(&config_file)?;
             if let Some(root) = get_git_repository_path(Path::new(".")) {
-                run_all_config(&config, &root)?;
+                run_all_config(&config, &root, source)?;
             } else {
                 println!("Not a git repository");
             }
@@ -38,9 +38,9 @@ fn main() -> Result<()> {
                 .map(RelativePath::new)
                 .collect::<Vec<_>>();
             let config_file = find_file(Path::new("."))?;
-            let config = parse_from_file(&config_file)?;
+            let (config, source) = parse_from_file(&config_file)?;
             if let Some(root) = get_git_repository_path(Path::new(".")) {
-                run_config(&config, &root, &file_paths[..])?;
+                run_config(&config, &root, &file_paths[..], source)?;
             } else {
                 println!("Not a git repository");
             }
