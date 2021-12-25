@@ -1,8 +1,9 @@
-use color_eyre::eyre::Result;
 use relative_path::RelativePath;
 use serde::Serialize;
 use std::{path::Path, process::Command};
 use tinytemplate::TinyTemplate;
+use thiserror::Error;
+use miette::Diagnostic;
 
 use super::DerivativeConfig;
 
@@ -11,11 +12,21 @@ struct Context<'a> {
     path: &'a RelativePath,
 }
 
+#[derive(Error, Diagnostic, Debug)]
+pub enum UpdateError {
+    #[error(transparent)]
+    #[diagnostic(code(tinytemplate::error::Error))]
+    TemplateError(#[from] tinytemplate::error::Error),
+    #[error(transparent)]
+    #[diagnostic(code(std::io::Error))]
+    IoError(#[from] std::io::Error),
+}
+
 pub fn run_config(
     config: &DerivativeConfig,
     root: &Path,
     requested_paths: &[&RelativePath],
-) -> Result<bool> {
+) -> Result<bool, UpdateError> {
     let mut success = true;
     for &path in requested_paths {
         let mut template = TinyTemplate::new();
@@ -50,7 +61,7 @@ pub fn run_config(
     Ok(success)
 }
 
-pub fn run_all_config(config: &DerivativeConfig, root: &Path) -> Result<bool> {
+pub fn run_all_config(config: &DerivativeConfig, root: &Path) -> Result<bool, UpdateError> {
     let mut success = true;
     for (path, generator) in config.generators.iter() {
         let mut template = TinyTemplate::new();

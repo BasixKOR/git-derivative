@@ -1,7 +1,6 @@
 use std::path::Path;
 
 use clap::Parser;
-use color_eyre::eyre::Result;
 use git_derivative::args::{Cli, Subcommands};
 use git_derivative::derivatives::file::{
     create_file, find_file, get_git_repository_path, parse_from_file,
@@ -10,17 +9,17 @@ use git_derivative::derivatives::updater::{run_config, run_all_config};
 use git_derivative::git::get_changed_files;
 use git_derivative::hook::install_hook;
 use relative_path::RelativePath;
+use miette::{IntoDiagnostic, Result};
 
 fn main() -> Result<()> {
-    color_eyre::install()?;
     let args = Cli::parse();
 
     match args.subcommand {
         Subcommands::Init => {
-            create_file(Path::new("."))?;
+            create_file(Path::new(".")).into_diagnostic()?;
         }
         Subcommands::Install => match get_git_repository_path(Path::new(".")) {
-            Some(path) => install_hook(&path)?,
+            Some(path) => install_hook(&path).into_diagnostic()?,
             None => println!("Not a git repository"),
         },
         Subcommands::Update => {
@@ -33,7 +32,7 @@ fn main() -> Result<()> {
             }
         }
         Subcommands::Hook { prev, current, .. } => {
-            let files = get_changed_files(&prev, &current)?;
+            let files = get_changed_files(&prev, &current).into_diagnostic()?;
             let file_paths = files
                 .iter()
                 .map(RelativePath::new)
