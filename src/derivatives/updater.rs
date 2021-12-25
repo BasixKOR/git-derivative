@@ -11,7 +11,6 @@ struct Context<'a> {
     path: &'a RelativePath,
 }
 
-// TODO: Make paths match regardless of path style (absolute, relative, etc.)
 pub fn run_config(
     config: &DerivativeConfig,
     root: &Path,

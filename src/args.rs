@@ -22,4 +22,11 @@ pub enum Subcommands {
 		#[clap(short, long)]
 		force: bool,
 	},
+	/// Intended to be run by a post-checkout hook. DO NOT RUN MANUALLY.
+	Hook {
+		prev: String,
+		current: String,
+		/// 0 if file checkout, 1 if file update.
+		is_branch: u8,
+	}
 }

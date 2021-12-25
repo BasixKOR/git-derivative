@@ -1,1 +1,1 @@
-echo $@
+git derivative hook $@
