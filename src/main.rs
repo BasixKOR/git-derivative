@@ -25,20 +25,20 @@ fn main() -> Result<()> {
 
     match args.subcommand {
         Subcommands::Init => match get_git_repository_path(Path::new(".")) {
-            Some(root) => create_file(&root).map(|_| ()).into_diagnostic()?,
-            None => return Err(NotGitRepositoryError().into()),
+            Some(root) => Ok(create_file(&root).map(|_| ()).into_diagnostic()?),
+            None => Err(NotGitRepositoryError().into()),
         },
         Subcommands::Install => match get_git_repository_path(Path::new(".")) {
-            Some(path) => install_hook(&path)?,
-            None => return Err(NotGitRepositoryError().into()),
+            Some(path) => Ok(install_hook(&path)?),
+            None => Err(NotGitRepositoryError().into()),
         },
         Subcommands::Update => {
             let config_file = find_file(Path::new("."))?;
             let (config, source) = parse_from_file(&config_file)?;
             if let Some(root) = get_git_repository_path(Path::new(".")) {
-                run_all_config(&config, &root, source)?;
+                Ok(run_all_config(&config, &root, source)?)
             } else {
-                return Err(NotGitRepositoryError().into());
+                Err(NotGitRepositoryError().into())
             }
         }
         Subcommands::Hook { prev, current, .. } => {
@@ -47,12 +47,10 @@ fn main() -> Result<()> {
             let config_file = find_file(Path::new("."))?;
             let (config, source) = parse_from_file(&config_file)?;
             if let Some(root) = get_git_repository_path(Path::new(".")) {
-                run_config(&config, &root, &file_paths[..], source)?;
+                Ok(run_config(&config, &root, &file_paths[..], source)?)
             } else {
-                return Err(NotGitRepositoryError().into());
+                Err(NotGitRepositoryError().into())
             }
         }
     }
-
-    Ok(())
 }
