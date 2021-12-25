@@ -1,5 +1,4 @@
 use color_eyre::eyre::Result;
-use globwalk::{FileType, GlobWalkerBuilder};
 use serde::Serialize;
 use std::{path::Path, process::Command};
 use tinytemplate::TinyTemplate;
@@ -11,35 +10,42 @@ struct Context<'a> {
     path: &'a Path,
 }
 
-pub fn run_config(config: &DerivativeConfig, root: &Path) -> Result<bool> {
-    let mut template = TinyTemplate::new();
+// TODO: Make paths match regardless of path style (absolute, relative, etc.)
+pub fn run_config(
+    config: &DerivativeConfig,
+    requested_paths: &[&Path],
+) -> Result<bool> {
     let mut success = true;
-    for (path, generator) in &config.generators {
-        template.add_template(&path, &generator)?;
+    for &path in requested_paths {
+        let mut template = TinyTemplate::new();
 
-        let walker = GlobWalkerBuilder::new(root, path)
-            .file_type(FileType::FILE)
-            .build()?;
+        let generator = if let Some(v) = config.generators.get(path) {
+            v
+        } else {
+            continue;
+        };
 
-        for entry in walker.filter_map(|e| e.ok()) {
-            let command = template.render(&path, &Context { path: entry.path() })?;
+        let path_string = path.to_string_lossy();
+        template.add_template(&path_string, &generator)?;
 
-            #[cfg(not(target_os = "windows"))]
-            let result = Command::new("sh")
-                .arg("-c")
-                .arg(command)
-                .current_dir(entry.path())
-                .status()?;
-            #[cfg(target_os = "windows")]
-            let result = Command::new("cmd")
-                .arg("/C")
-                .arg(command)
-                .current_dir(entry.path())
-                .status()?;
-            
-            if !result.success() {
-                success = false;
-            }
+        let path = Path::new(path);
+        let command = template.render(&path_string, &Context { path })?;
+
+        #[cfg(not(target_os = "windows"))]
+        let result = Command::new("sh")
+            .arg("-c")
+            .arg(command)
+            .current_dir(path)
+            .status()?;
+        #[cfg(target_os = "windows")]
+        let result = Command::new("cmd")
+            .arg("/C")
+            .arg(command)
+            .current_dir(path)
+            .status()?;
+
+        if !result.success() {
+            success = false;
         }
     }
     Ok(success)
