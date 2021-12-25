@@ -19,7 +19,7 @@ fn main() -> Result<()> {
             create_file(Path::new(".")).into_diagnostic()?;
         }
         Subcommands::Install => match get_git_repository_path(Path::new(".")) {
-            Some(path) => install_hook(&path).into_diagnostic()?,
+            Some(path) => install_hook(&path)?,
             None => println!("Not a git repository"),
         },
         Subcommands::Update => {
