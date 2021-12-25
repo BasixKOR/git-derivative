@@ -70,7 +70,7 @@ pub fn run_config(
             .or_else(|err| match err {
                 TemplateError::ParseError { column, line, .. } => {
                     let start = SourceOffset::from_location(generator, line, column + 2);
-                    let len = crate::derivatives::to_source_offset(1);
+                    let len = crate::derivatives::to_source_offset(0);
                     Err(UpdateError::ParseError {
                         source: err,
                         code: config.generators.get(path).cloned().unwrap().into_inner(),
@@ -117,7 +117,7 @@ pub fn run_all_config(
             .or_else(|err| match err {
                 TemplateError::ParseError { column, line, .. } => {
                     let start = SourceOffset::from_location(generator.get_ref(), line, column + 2);
-                    let len = crate::derivatives::to_source_offset(1);
+                    let len = crate::derivatives::to_source_offset(0);
                     Err(UpdateError::ParseError {
                         source: err,
                         code: config.generators.get(path).cloned().unwrap().into_inner(),
