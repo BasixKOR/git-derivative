@@ -2,13 +2,16 @@ use std::fs::{File, Permissions};
 use std::io::Write;
 use std::path::Path;
 
+use miette::Diagnostic;
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Diagnostic)]
 pub enum HookInstallationError {
-    #[error("The hook is already installed")]
+    #[error("The hook is already installed, or something else is using it.")]
+    #[diagnostic(code(git_derivative::hook::HookInstallationError::AlreadyInstalled))]
     AlreadyInstalled,
-    #[error("Failed to write file: {0:?}")]
+    #[error(transparent)]
+    #[diagnostic(code(std::io::Error))]
     WriteError(#[from] std::io::Error),
 }
 

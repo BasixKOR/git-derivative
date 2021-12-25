@@ -1,52 +1,56 @@
 use std::path::Path;
 
 use clap::Parser;
-use color_eyre::eyre::Result;
 use git_derivative::args::{Cli, Subcommands};
 use git_derivative::derivatives::file::{
     create_file, find_file, get_git_repository_path, parse_from_file,
 };
-use git_derivative::derivatives::updater::{run_config, run_all_config};
+use git_derivative::derivatives::updater::{run_all_config, run_config};
 use git_derivative::git::get_changed_files;
 use git_derivative::hook::install_hook;
+use miette::{Diagnostic, IntoDiagnostic, Result};
 use relative_path::RelativePath;
+use thiserror::Error;
+
+#[derive(Error, Diagnostic, Debug)]
+#[error("Couldn't find a git repository at the location.")]
+#[diagnostic(
+    code(git_derivative::NotGitRepositoryError),
+    help("Did you forget to run `git init`?")
+)]
+struct NotGitRepositoryError();
 
 fn main() -> Result<()> {
-    color_eyre::install()?;
     let args = Cli::parse();
 
     match args.subcommand {
-        Subcommands::Init => {
-            create_file(Path::new("."))?;
-        }
+        Subcommands::Init => match get_git_repository_path(Path::new(".")) {
+            Some(root) => Ok(create_file(&root).map(|_| ()).into_diagnostic()?),
+            None => Err(NotGitRepositoryError().into()),
+        },
         Subcommands::Install => match get_git_repository_path(Path::new(".")) {
-            Some(path) => install_hook(&path)?,
-            None => println!("Not a git repository"),
+            Some(path) => Ok(install_hook(&path)?),
+            None => Err(NotGitRepositoryError().into()),
         },
         Subcommands::Update => {
             let config_file = find_file(Path::new("."))?;
-            let config = parse_from_file(&config_file)?;
+            let (config, source) = parse_from_file(&config_file)?;
             if let Some(root) = get_git_repository_path(Path::new(".")) {
-                run_all_config(&config, &root)?;
+                Ok(run_all_config(&config, &root, source)?)
             } else {
-                println!("Not a git repository");
+                Err(NotGitRepositoryError().into())
             }
         }
         Subcommands::Hook { prev, current, .. } => {
-            let files = get_changed_files(&prev, &current)?;
-            let file_paths = files
-                .iter()
-                .map(RelativePath::new)
-                .collect::<Vec<_>>();
+            let files = get_changed_files(&prev, &current).into_diagnostic()?;
+            let file_paths = files.iter().map(RelativePath::new).collect::<Vec<_>>();
             let config_file = find_file(Path::new("."))?;
-            let config = parse_from_file(&config_file)?;
+            let (config, source) = parse_from_file(&config_file)?;
             if let Some(root) = get_git_repository_path(Path::new(".")) {
-                run_config(&config, &root, &file_paths[..])?;
+                Ok(run_config(&config, &root, &file_paths[..], source)?)
             } else {
-                println!("Not a git repository");
+                Err(NotGitRepositoryError().into())
             }
         }
     }
-
-    Ok(())
 }
