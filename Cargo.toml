@@ -7,5 +7,14 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "3.0.0-rc.8", features = ["derive"] }
+color-eyre = "0.5.11"
 git-config = "0.1.9"
 git2 = "0.13.25"
+globwalk = "0.8.1"
+indexmap = { version = "1.7.0", features = ["serde"] }
+miette = { version = "3.2.0", features = ["fancy"] }
+serde = { version = "1.0.132", features = ["derive"] }
+tinytemplate = "1.2.1"
+toml = { version = "0.5.8", features = ["indexmap"] }
+
+[features]

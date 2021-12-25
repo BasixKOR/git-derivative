@@ -1,12 +1,19 @@
-use clap::Parser;
-use git_derivative::args::{Cli, Subcommands};
+use std::path::Path;
 
-fn main() {
+use clap::Parser;
+use git_derivative::{
+    args::{Cli, Subcommands},
+    derivatives::file::create_file,
+};
+use color_eyre::eyre::Result;
+
+fn main() -> Result<()> {
+    color_eyre::install()?;
     let args = Cli::parse();
 
     match args.subcommand {
         Subcommands::Init => {
-            println!("init");
+            create_file(Path::new("."))?;
         }
         Subcommands::Install => {
             println!("install");
@@ -16,4 +23,6 @@ fn main() {
             println!("force: {}", force);
         }
     }
+
+    Ok(())
 }
