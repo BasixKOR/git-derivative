@@ -49,3 +49,31 @@ pub fn run_config(
     }
     Ok(success)
 }
+
+pub fn run_all_config(config: &DerivativeConfig, root: &Path) -> Result<bool> {
+    let mut success = true;
+    for (path, generator) in config.generators.iter() {
+        let mut template = TinyTemplate::new();
+        template.add_template(path.as_str(), &generator)?;
+
+        let command = template.render(path.as_str(), &Context { path })?;
+
+        #[cfg(not(target_os = "windows"))]
+        let result = Command::new("sh")
+            .arg("-c")
+            .arg(command)
+            .current_dir(root)
+            .status()?;
+        #[cfg(target_os = "windows")]
+        let result = Command::new("cmd")
+            .arg("/C")
+            .arg(command)
+            .current_dir(root)
+            .status()?;
+
+        if !result.success() {
+            success = false;
+        }
+    }
+    Ok(success)
+}

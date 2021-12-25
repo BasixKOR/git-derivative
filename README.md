@@ -5,8 +5,10 @@ For example if you checked out to a branch with different `yarn.lock`, git-deriv
 
 ## Installation
 
-	$ git derivative init
-	$ git derivative install # You may want to run this automatically for your project
+```s
+$ git derivative init
+$ git derivative install # You may want to run this automatically for your project
+```
 
 You can write what to run in `.gitderivative` file.
 
@@ -14,3 +16,12 @@ You can write what to run in `.gitderivative` file.
 [generators]
 "yarn.lock": "yarn install"
 ```
+
+## Usage
+
+```s
+$ git derivative update
+$ git derivative install # if not configured to do this automatically
+```
+
+And now you can mostly forget about it.

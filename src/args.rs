@@ -17,11 +17,7 @@ pub enum Subcommands {
 	/// Install a post-checkout hook.
 	Install,
 	/// Update files. Can be called by hook or manually.
-	Update {
-		/// Forcefully update all files, regardless of their modification.
-		#[clap(short, long)]
-		force: bool,
-	},
+	Update,
 	/// Intended to be run by a post-checkout hook. DO NOT RUN MANUALLY.
 	Hook {
 		prev: String,
