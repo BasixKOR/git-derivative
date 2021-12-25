@@ -25,7 +25,10 @@ pub enum UpdateError {
         source: tinytemplate::error::Error,
         #[source_code]
         code: String,
-        #[label]
+
+        #[label = "in this code..."]
+        defined_span: SourceSpan,
+        #[label = "around here"]
         span: SourceSpan,
     },
 
@@ -50,6 +53,17 @@ fn spanned_to_source_span(span: &toml::Spanned<String>) -> SourceSpan {
     (span.start(), span.end() - span.start()).into()
 }
 
+fn calculate_offset(
+    generator: &str,
+    span: &toml::Spanned<String>,
+    line: usize,
+    col: usize,
+) -> SourceOffset {
+    let base = spanned_to_source_span(span).offset();
+    let offset = SourceOffset::from_location(generator, line, col + 3).offset();
+    (base + offset).into()
+}
+
 pub fn run_config(
     config: &DerivativeConfig,
     root: &Path,
@@ -69,12 +83,13 @@ pub fn run_config(
             .add_template(path.as_str(), generator)
             .or_else(|err| match err {
                 TemplateError::ParseError { column, line, .. } => {
-                    let start = SourceOffset::from_location(generator, line, column + 2);
-                    let len = crate::derivatives::to_source_offset(0);
+                    let spanned = config.generators.get(path).cloned().unwrap();
+                    let start = calculate_offset(generator, &spanned, line, column);
                     Err(UpdateError::ParseError {
                         source: err,
-                        code: config.generators.get(path).cloned().unwrap().into_inner(),
-                        span: (start, len).into(),
+                        code: source.clone(),
+                        defined_span: spanned_to_source_span(&spanned),
+                        span: (start, 0.into()).into(),
                     })
                 }
                 others => Err(others.into()),
@@ -116,12 +131,14 @@ pub fn run_all_config(
             .add_template(path.as_str(), generator.get_ref())
             .or_else(|err| match err {
                 TemplateError::ParseError { column, line, .. } => {
-                    let start = SourceOffset::from_location(generator.get_ref(), line, column + 2);
-                    let len = crate::derivatives::to_source_offset(0);
+                    let spanned = config.generators.get(path).cloned().unwrap();
+                    let start =
+                        calculate_offset(generator.get_ref(), &spanned, line, column);
                     Err(UpdateError::ParseError {
                         source: err,
-                        code: config.generators.get(path).cloned().unwrap().into_inner(),
-                        span: (start, len).into(),
+                        code: source.clone(),
+                        defined_span: spanned_to_source_span(&spanned),
+                        span: (start, 0.into()).into(),
                     })
                 }
                 others => Err(others.into()),

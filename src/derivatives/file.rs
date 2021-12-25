@@ -78,14 +78,13 @@ pub fn parse_from_file(path: &Path) -> Result<(DerivativeConfig, String), ParseE
         toml::from_str(&contents).or_else(|source| {
             if let Some((line, col)) = source.line_col() {
                 let start = SourceOffset::from_location(&contents, line, col);
-                let len = crate::derivatives::to_source_offset(0);
                 Err(ParseError::TomlSyntax {
                     source,
                     source_code: NamedSource::new(
                         path.file_name().unwrap().to_string_lossy(),
                         contents.clone(),
                     ),
-                    span: (start, len).into(),
+                    span: (start, 0.into()).into(),
                 })
             } else {
                 Err(ParseError::Toml(source))
